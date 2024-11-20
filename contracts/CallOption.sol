@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 // TODO: implement attaching a method with params to call to the option purchase
+// TODO: make sure collateral is only collected when the option is purchased, else purchase fails, and offer is deleted
 
 /**
  * @title CallOption
