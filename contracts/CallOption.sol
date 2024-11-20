@@ -26,13 +26,13 @@ contract CallOption { // TODO: change block timestamp to block.number
     struct Bid {
         address bidder;
         uint256 amount;         // Number of options (gas units)
-        uint256 price;          // Price per option (in wei)
+        uint256 price;          // Price or premium per option (in wei)
     }
 
     struct Offer {
         address seller;
         uint256 amount;         // Number of options (gas units)
-        uint256 price;          // Price per option (in wei)
+        uint256 price;          // Price or premium per option (in wei)
         uint256 collateral;     // Collateral deposited (in wei)
     }
 
@@ -141,8 +141,8 @@ contract CallOption { // TODO: change block timestamp to block.number
 
     /**
      * @dev Places an offer in the order book.
-     * @param _size The number of options to sell.
-     * @param _price The offer price per option in wei.
+     * @param _size The number of options (gas units) to sell.
+     * @param _price The offer price or premium per option (in wei).
      */
     function placeOffer(uint256 _size, uint256 _price) external payable notExpired {
         require(_size > 0, "Amount must be greater than zero");
@@ -165,7 +165,20 @@ contract CallOption { // TODO: change block timestamp to block.number
     }
 
     function deleteOffer(uint256 _offerIndex) external {
-        // TODO: implement
+        require(_offerIndex < offers.length, "Invalid offer index");
+        require(offers[_offerIndex].seller == msg.sender, "Not the offer owner");
+
+        // Refund the collateral to the seller
+        uint256 refundAmount = offers[_offerIndex].collateral;
+        payable(msg.sender).transfer(refundAmount); // TODO: adapt to work on NIL blockchain
+
+        // If this is not the last element, move the last offer to this position
+        if (_offerIndex != offers.length - 1) {
+            offers[_offerIndex] = offers[offers.length - 1];
+        }
+        
+        emit OfferDeleted(msg.sender, _offerIndex);
+        offers.pop();
     }
 
     function exercise(uint256 _amount) external notExpired {
