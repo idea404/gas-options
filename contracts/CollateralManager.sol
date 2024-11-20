@@ -62,6 +62,7 @@ contract CollateralManager {
     }
 
     function sendNative(address _to, uint256 _amount) external onlyOption {
+        require(address(this).balance >= _amount, "Insufficient contract balance");
         payable(_to).transfer(_amount);
     }
 
