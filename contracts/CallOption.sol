@@ -180,49 +180,8 @@ contract CallOption { // TODO: change block timestamp to block.number
         // TODO: implement
     }
 
-    /**
-     * @dev Checks if the offer can be settled with the bids and settles if so.
-     * @param _offer The offer to check and settle.
-     */
     function _checkSettleOffer(Offer memory _offer) internal {
-        // Iterate through bids from highest to lowest price
-        for (uint256 i = 0; i < bids.length && _offer.amount > 0; i++) {
-            // Skip if bid price is lower than offer price
-            if (bids[i].price < _offer.price) continue;
-
-            // Calculate the amount to settle
-            uint256 settleAmount = _offer.amount < bids[i].amount ? 
-                _offer.amount : bids[i].amount;
-
-            // Create new position
-            Position memory newPosition = Position({
-                buyer: bids[i].bidder,
-                seller: _offer.seller,
-                size: settleAmount,
-                collateral: (_offer.collateral * settleAmount) / _offer.amount
-            });
-            positions.push(newPosition);
-
-            // Transfer payment from bid to seller
-            payable(_offer.seller).transfer(settleAmount * bids[i].price); // TODO: adapt to work on NIL blockchain
-
-            // Update remaining amounts
-            _offer.amount -= settleAmount;
-            _offer.collateral = (_offer.collateral * _offer.amount) / (_offer.amount + settleAmount);
-            bids[i].amount -= settleAmount;
-
-            // Remove bid if fully filled
-            if (bids[i].amount == 0) {
-                if (i != bids.length - 1) {
-                    bids[i] = bids[bids.length - 1];
-                }
-                bids.pop();
-                i--; // Adjust index since we removed an element
-            }
-
-            emit LongPositionCreated(newPosition.buyer, settleAmount, bids[i].price);
-            emit ShortPositionCreated(newPosition.seller, settleAmount, newPosition.collateral);
-        }
+        // TODO: implement
     }
 
     function _insertSortOffer(Offer memory _offer) internal {
