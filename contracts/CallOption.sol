@@ -57,6 +57,7 @@ contract CallOption { // TODO: change block timestamp to block.number
     event PositionLiquidated(address indexed liquidator, address indexed positionOwner, uint256 amount);
     event CollateralWithdrawn(address indexed writer, uint256 amount);
     event OfferDeleted(address indexed seller, uint256 indexed offerIndex);
+    event BidDeleted(address indexed bidder, uint256 indexed bidIndex);
 
     /**
      * @dev Modifier to check if the option is not expired.
@@ -149,6 +150,27 @@ contract CallOption { // TODO: change block timestamp to block.number
     }
 
     /**
+     * @dev Deletes a bid from the order book.
+     * @param _bidIndex The index of the bid to delete.
+     */
+    function deleteBid(uint256 _bidIndex) external {
+        require(_bidIndex < bids.length, "Invalid bid index");
+        require(bids[_bidIndex].bidder == msg.sender, "Not the bid owner");
+
+        // Return the ETH locked in the bid
+        uint256 refundAmount = bids[_bidIndex].amount * bids[_bidIndex].price;
+        payable(msg.sender).transfer(refundAmount);
+
+        // If this is not the last element, move the last bid to this position
+        if (_bidIndex != bids.length - 1) {
+            bids[_bidIndex] = bids[bids.length - 1];
+        }
+        
+        emit BidDeleted(msg.sender, _bidIndex);
+        bids.pop();
+    }
+
+    /**
      * @dev Places an offer in the order book.
      * @param _amount The number of options to sell.
      * @param _price The offer price per option in wei.
@@ -172,7 +194,10 @@ contract CallOption { // TODO: change block timestamp to block.number
         emit OfferPlaced(msg.sender, _amount, _price);
     }
     
-
+    /**
+     * @dev Deletes an offer from the order book.
+     * @param _offerIndex The index of the offer to delete.
+     */
     function deleteOffer(uint256 _offerIndex) external {
         require(_offerIndex < offers.length, "Invalid offer index");
         require(offers[_offerIndex].seller == msg.sender, "Not the offer owner");
