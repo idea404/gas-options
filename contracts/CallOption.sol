@@ -189,8 +189,55 @@ contract CallOption { // TODO: change block timestamp to block.number
         // TODO: implement
     }
 
+    /**
+     * @dev Checks if the bid can be settled with the offers and settles if so.
+     * @param _bid The bid to check and settle.
+     */
     function _checkSettleBid(Bid memory _bid) internal {
-        // TODO: implement
+        // Iterate through offers while we still have bid amount to fill
+        // and there are offers available at acceptable prices
+        uint256 i = 0;
+        while (i < offers.length && _bid.amount > 0) {
+            // Skip if offer price is higher than bid price
+            if (offers[i].price > _bid.price) {
+                i++;
+                continue;
+            }
+
+            // Calculate how much can be filled from this offer
+            uint256 fillAmount = _bid.amount < offers[i].amount ? 
+                               _bid.amount : offers[i].amount;
+
+            // Create new position
+            positions.push(Position({
+                buyer: _bid.bidder,
+                seller: offers[i].seller,
+                size: fillAmount,
+                collateral: (fillAmount * offers[i].price * COLLATERAL_FACTOR)
+            }));
+
+            // Transfer premium from buyer to seller
+            payable(offers[i].seller).transfer(fillAmount * offers[i].price);
+
+            // Update remaining amounts
+            _bid.amount -= fillAmount;
+            offers[i].amount -= fillAmount;
+            offers[i].collateral -= (fillAmount * offers[i].price * COLLATERAL_FACTOR);
+
+            // Emit events
+            emit ShortPositionCreated(offers[i].seller, fillAmount, fillAmount * offers[i].price * COLLATERAL_FACTOR);
+            emit LongPositionCreated(_bid.bidder, fillAmount, offers[i].price);
+
+            // If offer is completely filled, remove it
+            if (offers[i].amount == 0) {
+                if (i != offers.length - 1) {
+                    offers[i] = offers[offers.length - 1];
+                }
+                offers.pop();
+            } else {
+                i++;
+            }
+        }
     }
 
     function _insertSortBid(Bid memory _bid) internal {
