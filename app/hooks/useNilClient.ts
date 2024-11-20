@@ -17,11 +17,15 @@ export function useNilClient() {
   useEffect(() => {
     const initClient = () => {
       try {
+        const shardId = Number(process.env.NEXT_PUBLIC_NIL_SHARD_ID || 1);
+        console.log('Initializing Nil client with shard ID:', shardId);
+        
         const client = new PublicClient({
           transport: new HttpTransport({
             endpoint: process.env.NEXT_PUBLIC_NIL_RPC_URL || 'http://localhost:8545',
             timeout: 60000, // 60 seconds timeout
           }),
+          shardId,
         });
         
         setState({
@@ -30,6 +34,7 @@ export function useNilClient() {
           isLoading: false,
         });
       } catch (err) {
+        console.error('Failed to initialize Nil client:', err);
         setState({
           client: null,
           error: err instanceof Error ? err : new Error('Failed to initialize nil client'),

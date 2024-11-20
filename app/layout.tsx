@@ -1,9 +1,10 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import Header from './components/Header'
 
 export const metadata: Metadata = {
-  title: 'Nil Client Web Interface',
-  description: 'Web interface for interacting with nil client',
+  title: 'Gas Options Trading',
+  description: 'Options trading platform',
 }
 
 export default function RootLayout({
@@ -13,7 +14,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pt-4">
+          {children}
+        </main>
+      </body>
     </html>
   )
 }
