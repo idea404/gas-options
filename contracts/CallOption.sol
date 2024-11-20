@@ -240,8 +240,33 @@ contract CallOption { // TODO: change block timestamp to block.number
         }
     }
 
+    /**
+     * @dev Inserts a bid into the order book, maintaining descending price order.
+     * @param _bid The bid to insert.
+     */
     function _insertSortBid(Bid memory _bid) internal {
-        // TODO: implement
+        // If bids array is empty, simply push the bid
+        if (bids.length == 0) {
+            bids.push(_bid);
+            return;
+        }
+
+        // Find the correct position to insert (maintaining descending price order)
+        uint256 i = 0;
+        while (i < bids.length && bids[i].price > _bid.price) {
+            i++;
+        }
+
+        // Extend array length by one
+        bids.push(bids[bids.length - 1]);
+
+        // Shift elements to make space for new bid
+        for (uint256 j = bids.length - 1; j > i; j--) {
+            bids[j] = bids[j - 1];
+        }
+
+        // Insert the new bid at position i
+        bids[i] = _bid;
     }
 
     function _checkSettleOffer(Offer memory _offer) internal {
