@@ -299,7 +299,7 @@ contract CallOption { // TODO: change block timestamp to block.number
             }));
 
             // Transfer premium from buyer to seller
-            payable(_offer.seller).transfer(fillAmount * _offer.price);
+            payable(_offer.seller).transfer(fillAmount * _offer.price); // TODO: adapt to work on NIL blockchain
 
             // Update remaining amounts
             _offer.amount -= fillAmount;
@@ -322,8 +322,33 @@ contract CallOption { // TODO: change block timestamp to block.number
         }
     }
 
+    /**
+     * @dev Inserts an offer into the order book, maintaining ascending price order.
+     * @param _offer The offer to insert.
+     */
     function _insertSortOffer(Offer memory _offer) internal {
-        // TODO: implement
+        // If offers array is empty, simply push the offer
+        if (offers.length == 0) {
+            offers.push(_offer);
+            return;
+        }
+
+        // Find the correct position to insert (maintaining ascending price order)
+        uint256 i = 0;
+        while (i < offers.length && offers[i].price < _offer.price) {
+            i++;
+        }
+
+        // Extend array length by one
+        offers.push(offers[offers.length - 1]);
+
+        // Shift elements to make space for new offer
+        for (uint256 j = offers.length - 1; j > i; j--) {
+            offers[j] = offers[j - 1];
+        }
+
+        // Insert the new offer at position i
+        offers[i] = _offer;
     }
 
     function runAdminFunctions() external adminOnly {
