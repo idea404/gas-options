@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+// TODO: implement attaching a method with params to call to the option purchase
+
 /**
  * @title CallOption
  * @dev Represents an American-style Call Option on the EVM Gas Price.
@@ -269,8 +271,55 @@ contract CallOption { // TODO: change block timestamp to block.number
         bids[i] = _bid;
     }
 
+    /**
+     * @dev Checks if the offer can be settled with the bids and settles if so.
+     * @param _offer The offer to check and settle.
+     */
     function _checkSettleOffer(Offer memory _offer) internal {
-        // TODO: implement
+        // Iterate through bids while we still have offer amount to fill
+        // and there are bids available at acceptable prices
+        uint256 i = 0;
+        while (i < bids.length && _offer.amount > 0) {
+            // Skip if bid price is lower than offer price
+            if (bids[i].price < _offer.price) {
+                i++;
+                continue;
+            }
+
+            // Calculate how much can be filled from this bid
+            uint256 fillAmount = _offer.amount < bids[i].amount ? 
+                               _offer.amount : bids[i].amount;
+
+            // Create new position
+            positions.push(Position({
+                buyer: bids[i].bidder,
+                seller: _offer.seller,
+                size: fillAmount,
+                collateral: (fillAmount * _offer.price * COLLATERAL_FACTOR)
+            }));
+
+            // Transfer premium from buyer to seller
+            payable(_offer.seller).transfer(fillAmount * _offer.price);
+
+            // Update remaining amounts
+            _offer.amount -= fillAmount;
+            bids[i].amount -= fillAmount;
+            _offer.collateral -= (fillAmount * _offer.price * COLLATERAL_FACTOR);
+
+            // Emit events
+            emit ShortPositionCreated(_offer.seller, fillAmount, fillAmount * _offer.price * COLLATERAL_FACTOR);
+            emit LongPositionCreated(bids[i].bidder, fillAmount, _offer.price);
+
+            // If bid is completely filled, remove it
+            if (bids[i].amount == 0) {
+                if (i != bids.length - 1) {
+                    bids[i] = bids[bids.length - 1];
+                }
+                bids.pop();
+            } else {
+                i++;
+            }
+        }
     }
 
     function _insertSortOffer(Offer memory _offer) internal {
