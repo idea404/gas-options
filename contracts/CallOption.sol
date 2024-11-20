@@ -13,6 +13,9 @@ import "./CollateralManager.sol";
 contract CallOption {
     CollateralManager public collateralManager;
 
+    // Admin address
+    address public admin;
+
     // Option parameters
     uint256 public strike;        // Strike price (in wei)
     uint256 public expiration;    // Expiration timestamp
@@ -70,7 +73,7 @@ contract CallOption {
      * @dev Modifier to check if the caller is the admin.
      */
     modifier adminOnly() {
-        require(msg.sender == address(0x0000000000000000000000000000000000000000), "Only the admin can call this function"); // TODO: change this address
+        require(msg.sender == admin, "Only the admin can call this function");
         _;
     }
 
@@ -80,12 +83,13 @@ contract CallOption {
      * @param _expiration The expiration timestamp.
      * @param _factory The address of the factory contract.
      */
-    constructor(uint256 _strike, uint256 _expiration, address _factory, address _collateralManager) {
+    constructor(uint256 _strike, uint256 _expiration, address _factory, address _collateralManager, address _admin) {
         require(_expiration > block.timestamp, "Expiration must be in the future");
         strike = _strike;
         expiration = _expiration;
         factory = _factory;
         collateralManager = CollateralManager(payable(_collateralManager));
+        admin = _admin;
     }
 
     /**

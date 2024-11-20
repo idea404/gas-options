@@ -1,0 +1,118 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/dennis/Documents/Code/nil/gas-options/contracts/CallOption.sol": {
+      "lastModificationDate": 1732117722902,
+      "contentHash": "f43e3795c1f0f281125f9c276b8bc529",
+      "sourceName": "contracts/CallOption.sol",
+      "solcConfig": {
+        "version": "0.8.26",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./CollateralManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.13"
+      ],
+      "artifacts": [
+        "CallOption"
+      ]
+    },
+    "/Users/dennis/Documents/Code/nil/gas-options/contracts/CollateralManager.sol": {
+      "lastModificationDate": 1732117876230,
+      "contentHash": "9873a74bb75bf9ddc28627f2e3f47c7a",
+      "sourceName": "contracts/CollateralManager.sol",
+      "solcConfig": {
+        "version": "0.8.26",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.13"
+      ],
+      "artifacts": [
+        "CollateralManager"
+      ]
+    },
+    "/Users/dennis/Documents/Code/nil/gas-options/contracts/ContractFactory.sol": {
+      "lastModificationDate": 1732117722902,
+      "contentHash": "1fc3ac34ddacd0214ddb304c71c54706",
+      "sourceName": "contracts/ContractFactory.sol",
+      "solcConfig": {
+        "version": "0.8.26",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./CallOption.sol",
+        "./CollateralManager.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.13"
+      ],
+      "artifacts": [
+        "GasPriceOptionsFactory"
+      ]
+    }
+  }
+}

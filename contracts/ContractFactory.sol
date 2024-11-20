@@ -12,6 +12,9 @@ contract GasPriceOptionsFactory {
     address[] public allOptions;
     CollateralManager public collateralManager;
 
+    // Admin address
+    address public admin = 0x0001f1964a84Fe7c6e9b14461CC30ff194f7Ece9;
+
     /**
      * @dev Constructor to initialize the collateral manager.
      */
@@ -31,7 +34,8 @@ contract GasPriceOptionsFactory {
             _strike, 
             _expiration, 
             address(this),
-            address(collateralManager)
+            address(collateralManager),
+            admin
         );
         allOptions.push(address(option));
         collateralManager.registerOption(address(option));
