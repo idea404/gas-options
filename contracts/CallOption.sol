@@ -164,6 +164,10 @@ contract CallOption { // TODO: change block timestamp to block.number
         }
     }
 
+    /**
+     * @dev Deletes an offer from the order book.
+     * @param _offerIndex The index of the offer to delete.
+     */
     function deleteOffer(uint256 _offerIndex) external {
         require(_offerIndex < offers.length, "Invalid offer index");
         require(offers[_offerIndex].seller == msg.sender, "Not the offer owner");
