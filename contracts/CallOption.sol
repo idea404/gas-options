@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "./CollateralManager.sol";
 
 // TODO: implement attaching a method with params to call to the option purchase
-// TODO: change block timestamp to block.number
 
 /**
  * @title CallOption
@@ -18,7 +17,7 @@ contract CallOption {
 
     // Option parameters
     uint256 public strike;        // Strike price (in wei)
-    uint256 public expiration;    // Expiration timestamp
+    uint256 public expiration;    // Expiration block number
     address public factory;       // Address of the factory that created this option
 
     // Market fee (0.5%)
@@ -57,7 +56,7 @@ contract CallOption {
      * @dev Modifier to check if the option is not expired.
      */
     modifier notExpired() {
-        require(block.timestamp < expiration, "Option has expired");
+        require(block.number < expiration, "Option has expired");
         _;
     }
 
@@ -65,7 +64,7 @@ contract CallOption {
      * @dev Modifier to check if the option is expired.
      */
     modifier isExpired() {
-        require(block.timestamp >= expiration, "Option has not expired yet");
+        require(block.number >= expiration, "Option has not expired yet");
         _;
     }
 
@@ -80,11 +79,11 @@ contract CallOption {
     /**
      * @dev Constructor to initialize the CallOption contract.
      * @param _strike The strike price in wei.
-     * @param _expiration The expiration timestamp.
+     * @param _expiration The expiration block number.
      * @param _factory The address of the factory contract.
      */
     constructor(uint256 _strike, uint256 _expiration, address _factory, address _collateralManager, address _admin) {
-        require(_expiration > block.timestamp, "Expiration must be in the future");
+        require(_expiration > block.number, "Expiration must be in the future");
         strike = _strike;
         expiration = _expiration;
         factory = _factory;
