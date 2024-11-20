@@ -72,6 +72,14 @@ contract CallOption { // TODO: change block timestamp to block.number
     }
 
     /**
+     * @dev Modifier to check if the caller is the admin.
+     */
+    modifier adminOnly() {
+        require(msg.sender == address(0x0000000000000000000000000000000000000000), "Only the admin can call this function"); // TODO: change this address
+        _;
+    }
+
+    /**
      * @dev Constructor to initialize the CallOption contract.
      * @param _strike The strike price in wei.
      * @param _expiration The expiration timestamp.
@@ -84,6 +92,11 @@ contract CallOption { // TODO: change block timestamp to block.number
         factory = _factory;
     }
 
+    /**
+     * @dev Places a bid in the order book.
+     * @param _amount The number of options to buy.
+     * @param _price The bid price per option in wei.
+     */
     function placeBid(uint256 _amount, uint256 _price) external payable notExpired {
         require(_amount > 0, "Amount must be greater than zero");
         require(_price > 0, "Price must be greater than zero");
@@ -96,7 +109,7 @@ contract CallOption { // TODO: change block timestamp to block.number
         });
 
         // Try to settle the bid against existing offers first
-        _settleBid(bid);
+        _checkSettleBid(bid);
 
         // If there's any remaining amount, add it to the bid book, sorted by price
         if (bid.amount > 0) {
@@ -105,16 +118,25 @@ contract CallOption { // TODO: change block timestamp to block.number
         }
     }
 
-    function _insertSortBid(Bid memory _bid) internal {
-        // TODO: implement
-    }
-
-    function _settleBid(Bid memory _bid) internal {
-        // TODO: implement
-    }
-
+    /**
+     * @dev Deletes a bid from the order book.
+     * @param _bidIndex The index of the bid to delete.
+     */
     function deleteBid(uint256 _bidIndex) external {
-        // TODO: implement
+        require(_bidIndex < bids.length, "Invalid bid index");
+        require(bids[_bidIndex].bidder == msg.sender, "Not the bid owner");
+
+        // Refund the bid amount to the bidder
+        uint256 refundAmount = bids[_bidIndex].amount * bids[_bidIndex].price;
+        payable(msg.sender).transfer(refundAmount); // TODO: adapt to work on NIL blockchain
+
+        // If this is not the last element, move the last bid to this position
+        if (_bidIndex != bids.length - 1) {
+            bids[_bidIndex] = bids[bids.length - 1];
+        }
+        
+        emit BidDeleted(msg.sender, _bidIndex);
+        bids.pop();
     }
 
     /**
@@ -134,7 +156,28 @@ contract CallOption { // TODO: change block timestamp to block.number
             collateral: msg.value
         });
         _checkSettleOffer(offer);
-        _insertSortOffer(offer);
+
+        // If there's any remaining amount, add it to the offer book, sorted by price
+        if (offer.amount > 0) {
+            _insertSortOffer(offer);
+            emit OfferPlaced(msg.sender, offer.amount, offer.price);
+        }
+    }
+
+    function deleteOffer(uint256 _offerIndex) external {
+        // TODO: implement
+    }
+
+    function exercise(uint256 _amount) external notExpired {
+        // TODO: implement
+    }
+
+    function _checkSettleBid(Bid memory _bid) internal {
+        // TODO: implement
+    }
+
+    function _insertSortBid(Bid memory _bid) internal {
+        // TODO: implement
     }
 
     /**
@@ -182,145 +225,20 @@ contract CallOption { // TODO: change block timestamp to block.number
         }
     }
 
-    /**
-     * @dev Deletes an offer from the order book.
-     * @param _offerIndex The index of the offer to delete.
-     */
-    function deleteOffer(uint256 _offerIndex) external {
-        require(_offerIndex < offers.length, "Invalid offer index");
-        require(offers[_offerIndex].seller == msg.sender, "Not the offer owner");
-
-        // If this is not the last element, move the last offer to this position
-        if (_offerIndex != offers.length - 1) {
-            offers[_offerIndex] = offers[offers.length - 1];
-        }
-        
-        emit OfferDeleted(msg.sender, _offerIndex);
-        offers.pop();
-    }
-
-    /**
-     * @dev Allows a long holder to exercise their option at any time before expiration.
-     */
-    function exercise(uint256 _amount) external notExpired {
-        require(_amount > 0, "Amount must be greater than zero");
-
-        // Find the long position
-        uint256 totalAvailable = 0;
-        uint256 positionIndex = type(uint256).max;
-        for (uint256 i = 0; i < longPositions.length; i++) {
-            if (longPositions[i].owner == msg.sender) {
-                totalAvailable += longPositions[i].size;
-                positionIndex = i;
-                break;
-            }
-        }
-        require(positionIndex != type(uint256).max, "Long position not found");
-        require(totalAvailable >= _amount, "Not enough options to exercise");
-
-        // Calculate the cost based on current gas price
-        uint256 currentGasPrice = block.basefee;
-        require(currentGasPrice >= strike, "Gas price below strike, option not profitable");
-
-        uint256 payout = _amount * (currentGasPrice - strike);
-
-        // Transfer ETH to the option holder
-        payable(msg.sender).transfer(payout);
-
-        // Reduce the long position
-        longPositions[positionIndex].size -= _amount;
-
-        emit OptionExercised(msg.sender, _amount, currentGasPrice);
-    }
-
-    /**
-     * @dev Settles the option at expiration using block.basefee.
-     */
-    function _settle() external isExpired {
-        uint256 finalGasPrice = block.basefee;
-        emit OptionSettled(finalGasPrice);
-        // Additional settlement logic can be added here
-    }
-
-    /**
-     * @dev Inserts an offer into the order book using insertion sort.
-     * @param _offer The offer to insert.
-     */
     function _insertSortOffer(Offer memory _offer) internal {
-        if (_offer.amount == 0) return;
-
-        // If offers array is empty, simply push the new offer
-        if (offers.length == 0) {
-            offers.push(_offer);
-            return;
-        }
-
-        // Find the correct position to insert (ascending order by price)
-        uint256 i;
-        for (i = 0; i < offers.length; i++) {
-            if (_offer.price < offers[i].price) {
-                break;
-            }
-        }
-
-        // Push a dummy offer to increase array length
-        offers.push(offers[offers.length - 1]);
-
-        // Shift all higher priced offers up by one position
-        for (uint256 j = offers.length - 1; j > i; j--) {
-            offers[j] = offers[j - 1];
-        }
-
-        // Insert the new offer at the correct position
-        offers[i] = _offer;
-
-        emit OfferPlaced(msg.sender, _offer.amount, _offer.price);
+        // TODO: implement
     }
 
-    /**
-     * @dev Liquidates an undercollateralized short position.
-     * @param _positionIndex The index of the short position to liquidate.
-     */
+    function runAdminFunctions() external adminOnly {
+        // TODO: implement, should be able to settle expired positions, liquidate undercollateralized positions, and withdraw collateral
+    }
+
     function _liquidate(uint256 _positionIndex) external payable notExpired {
-        require(_positionIndex < shortPositions.length, "Invalid position index");
-        ShortPosition storage position = shortPositions[_positionIndex];
-
-        // Check collateralization
-        uint256 requiredCollateral = position.size * strike * COLLATERAL_FACTOR;
-        if (position.collateral < requiredCollateral) {
-            // Calculate the deficit
-            uint256 deficit = requiredCollateral - position.collateral;
-            require(msg.value >= deficit, "Insufficient ETH to cover deficit");
-
-            // Transfer the deficit to the original position owner
-//!!!Forge test cannot make the short owner payable - fix this!!!
-//            payable(position.owner).transfer(deficit);
-
-            // Update the collateral
-            position.collateral += msg.value;
-
-            emit PositionLiquidated(msg.sender, position.owner, position.size);
-        } else {
-            revert("Position is sufficiently collateralized");
-        }
+        // TODO: implement
     }
 
-    /**
-     * @dev Allows writers to withdraw their collateral after expiration.
-     * @param _positionIndex The index of the short position to withdraw collateral from.
-     */
     function _withdrawCollateral(uint256 _positionIndex) external isExpired {
-        require(_positionIndex < shortPositions.length, "Invalid position index");
-        ShortPosition storage position = shortPositions[_positionIndex];
-        require(position.owner == msg.sender, "Not the owner of this position");
-
-        uint256 collateralAmount = position.collateral;
-        position.collateral = 0;
-
-        // Transfer collateral back to the writer
-        payable(msg.sender).transfer(collateralAmount);
-
-        emit CollateralWithdrawn(msg.sender, collateralAmount);
+        // TODO: implement
     }
 
     /**
