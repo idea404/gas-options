@@ -18,7 +18,7 @@ contract GasPriceOptionsFactory {
      * @param _strike The strike price (in wei) for the option.
      * @param _expiration The expiration time (timestamp) for the option.
      */
-    function createOption(uint256 _strike, uint256 _expiration) external returns (address) {
+    function createOption(uint256 _strike, uint256 _expiration) external returns (address) { // TODO: change block timestamp to block.number
         require(_expiration > block.timestamp, "Expiration must be in the future");
         CallOption option = new CallOption(_strike, _expiration, address(this)); // Corrected
         allOptions.push(address(option));
