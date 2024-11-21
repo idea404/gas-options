@@ -18,8 +18,8 @@ contract GasPriceOptionsFactory {
     /**
      * @dev Constructor to initialize the collateral manager.
      */
-    constructor() {
-        collateralManager = new CollateralManager(address(this));
+    constructor(address _collateralManager) {
+        collateralManager = new CollateralManager(_collateralManager);
     }
 
     /**
